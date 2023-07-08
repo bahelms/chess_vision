@@ -1,4 +1,5 @@
 # Chess Vision
+Convert an image of a chessboard into a digital representation
 
 ## Battle Plan
 * LiveView to capture image and store it. File or S3?
