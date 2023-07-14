@@ -1,0 +1,13 @@
+[package]
+name = "chess_vision"
+version = "0.1.0"
+authors = []
+edition = "2021"
+
+[lib]
+name = "chess_vision"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+rustler = "0.29.1"
