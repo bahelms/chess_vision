@@ -1,0 +1,10 @@
+<div class="text-center">
+  <h1 class="text-4xl my-20">Chess Vision</h1>
+
+  <.simple_form for={%{}} phx-submit="capture" phx-change="validate">
+    <.live_file_input upload={@uploads.board_image} />
+    <:actions>
+      <.button>Capture a chessboard</.button>
+    </:actions>
+  </.simple_form>
+</div>

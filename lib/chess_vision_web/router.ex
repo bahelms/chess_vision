@@ -10,20 +10,11 @@ defmodule ChessVisionWeb.Router do
     plug :put_secure_browser_headers
   end
 
-  pipeline :api do
-    plug :accepts, ["json"]
-  end
-
   scope "/", ChessVisionWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
+    live "/", HomeFormLive
   end
-
-  # Other scopes may use custom stacks.
-  # scope "/api", ChessVisionWeb do
-  #   pipe_through :api
-  # end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
   if Application.compile_env(:chess_vision, :dev_routes) do
