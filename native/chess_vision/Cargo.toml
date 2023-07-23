@@ -11,3 +11,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 rustler = "0.29.1"
+image = "0.23"
+ndarray = "0.15"
+ndarray-stats = "0.5"
+num-traits = "0.2"
