@@ -5,9 +5,7 @@
     <.live_file_input upload={@uploads.board_image} />
     <.live_img_preview :for={entry <- @uploads.board_image.entries} entry={entry} />
     <:actions>
-      <.button>Capture a chessboard</.button>
+      <.button>Capture chessboard</.button>
     </:actions>
   </.simple_form>
-
-  <div :if={@fen}>FEN: <%= @fen %></div>
 </div>
