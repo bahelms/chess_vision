@@ -36,3 +36,5 @@ chess_vision-*.tar
 npm-debug.log
 /assets/node_modules/
 
+input_images/
+image_output/
