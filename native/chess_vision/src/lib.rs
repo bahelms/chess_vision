@@ -3,7 +3,7 @@ use opencv::{
     core::{self, Point},
     imgcodecs, imgproc,
 };
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::f64::consts::PI;
 use std::hash::{Hash, Hasher};
 
@@ -86,8 +86,8 @@ fn crop_board_squares_and_save(intersections: Vec<Vec<Point>>, image: Mat) {
                     )
                     .expect("Cropping failed");
                     if cropped.size().unwrap().width != 0 {
-                        let filename = format!("{}{}.jpg", h_int_idx, point_idx);
-                        save_image(&filename, &cropped);
+                        let filename = format_filename(h_int_idx, point_idx);
+                        save_image(&format!("squares/{}", filename), &cropped);
                     } else {
                         panic!("Cropped has no size");
                     }
@@ -95,6 +95,30 @@ fn crop_board_squares_and_save(intersections: Vec<Vec<Point>>, image: Mat) {
             }
         }
     }
+}
+
+fn format_filename(row: usize, col: usize) -> String {
+    let row_map = HashMap::from([
+        (0, "8"),
+        (1, "7"),
+        (2, "6"),
+        (3, "5"),
+        (4, "4"),
+        (5, "3"),
+        (6, "2"),
+        (7, "1"),
+    ]);
+    let col_map = HashMap::from([
+        (0, "a"),
+        (1, "b"),
+        (2, "c"),
+        (3, "d"),
+        (4, "e"),
+        (5, "f"),
+        (6, "g"),
+        (7, "h"),
+    ]);
+    format!("{}{}.jpg", col_map[&col], row_map[&row])
 }
 
 fn find_intersections(lines: Vec<PolarLine>, max_width: i32) -> Vec<Vec<Point>> {
@@ -202,6 +226,9 @@ fn save_lines_image(lines: &Vec<PolarLine>, edges: &core::Mat) {
 }
 
 fn save_image(filename: &str, image: &Mat) {
+    std::fs::create_dir_all("image_output/squares")
+        .expect("Failed to creat 'image_output/squares'");
+
     let write_params = core::Vector::new();
     let filepath = format!("image_output/{}", filename);
     let failure = format!("Failed to write {}", filename);
