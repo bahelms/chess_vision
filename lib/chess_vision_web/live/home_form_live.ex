@@ -17,7 +17,7 @@ defmodule ChessVisionWeb.HomeFormLive do
   @impl Phoenix.LiveView
   def handle_event("capture", _params, socket) do
     image_path = save_file(socket)
-    ChessVision.ImageRecognition.canny_edge_detection(image_path)
+    ChessVision.ImageRecognition.convert_image_to_fen(image_path)
     {:noreply, assign(socket, uploaded_image: image_path)}
   end
 
@@ -27,7 +27,7 @@ defmodule ChessVisionWeb.HomeFormLive do
         Path.join([:code.priv_dir(:chess_vision), "static", "uploads", Path.basename(path)])
 
       File.cp!(path, dest)
-      {:ok, "/uploads/#{Path.basename(dest)}"}
+      {:ok, dest}
     end)
     |> List.first()
   end

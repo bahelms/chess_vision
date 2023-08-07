@@ -11,5 +11,4 @@ crate-type = ["cdylib"]
 
 [dependencies]
 rustler = "0.29.1"
-image = "0.24"
-imageproc = "0.23"
+opencv = "0.84.0"
