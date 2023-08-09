@@ -8,7 +8,7 @@ use std::f64::consts::PI;
 use std::hash::{Hash, Hasher};
 
 #[rustler::nif]
-fn detect_chessboard(image_file: String) {
+fn detect_chessboard(image_file: String) -> Vec<String> {
     // grayscale
     let image = imgcodecs::imread(&image_file, imgcodecs::IMREAD_GRAYSCALE)
         .expect("Image file could not be read");
@@ -34,7 +34,7 @@ fn detect_chessboard(image_file: String) {
     save_lines_image(&polar_lines, &edges);
 
     let intersections = find_intersections(polar_lines, max_width);
-    crop_board_squares_and_save(intersections, image);
+    crop_board_squares_and_save(intersections, image, max_width)
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -68,26 +68,35 @@ impl std::fmt::Display for PolarLine {
     }
 }
 
-fn crop_board_squares_and_save(intersections: Vec<Vec<Point>>, image: Mat) {
+fn crop_board_squares_and_save(
+    intersections: Vec<Vec<Point>>,
+    image: Mat,
+    max_width: i32,
+) -> Vec<String> {
+    let mut filenames = Vec::new();
+    let dimensions = max_width / 8;
     for (h_int_idx, h_int) in intersections.iter().enumerate() {
         for (point_idx, point) in h_int.iter().enumerate() {
             if point_idx + 1 < h_int.len() {
-                let end_x = h_int[point_idx + 1].x;
+                // let end_x = h_int[point_idx + 1].x;
                 if h_int_idx + 1 < intersections.len() {
-                    let end_y = intersections[h_int_idx + 1][point_idx].y;
+                    // let end_y = intersections[h_int_idx + 1][point_idx].y;
                     let cropped = Mat::roi(
                         &image,
-                        opencv::core::Rect {
+                        core::Rect {
                             x: point.x,
                             y: point.y,
-                            width: end_x - point.x,
-                            height: end_y - point.y,
+                            // width: end_x - point.x,
+                            // height: end_y - point.y,
+                            width: dimensions,
+                            height: dimensions,
                         },
                     )
                     .expect("Cropping failed");
                     if cropped.size().unwrap().width != 0 {
                         let filename = format_filename(h_int_idx, point_idx);
                         save_image(&format!("squares/{}", filename), &cropped);
+                        filenames.push(filename);
                     } else {
                         panic!("Cropped has no size");
                     }
@@ -95,6 +104,7 @@ fn crop_board_squares_and_save(intersections: Vec<Vec<Point>>, image: Mat) {
             }
         }
     }
+    filenames
 }
 
 fn format_filename(row: usize, col: usize) -> String {
