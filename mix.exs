@@ -50,6 +50,7 @@ defmodule ChessVision.MixProject do
       {:rustler, "~> 0.29.1"},
       {:nx, "~> 0.5.3"},
       {:axon, "~> 0.5.1"},
+      {:exla, "~> 0.5.3"},
       {:scidata, "~> 0.1.5"}
     ]
   end

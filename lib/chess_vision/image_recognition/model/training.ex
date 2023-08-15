@@ -4,10 +4,15 @@ defmodule ChessVision.ImageRecognition.Model.Training do
   Uppercase is white.
   """
 
+  @type image :: Nx.Tensor
+  @type label :: Nx.Tensor
+
+  @spec prepare_training_data([String.t()]) :: [{image, label}]
   def prepare_training_data(filenames) do
     filenames
     |> pair_with_labels()
     |> read_image_files()
+    |> pad_trailing_image_bytes()
     |> convert_to_tensors()
   end
 
@@ -31,6 +36,25 @@ defmodule ChessVision.ImageRecognition.Model.Training do
   end
 
   defp images_dir(), do: "training_data/images"
+
+  # So all images have the same length
+  defp pad_trailing_image_bytes({images, labels}) do
+    max_size = find_max_byte_size(images)
+
+    images =
+      Enum.map(images, fn img ->
+        diff = max_size - byte_size(img)
+        <<img::binary, 0::size(diff)-unit(8)>>
+      end)
+
+    {images, labels}
+  end
+
+  defp find_max_byte_size(images) do
+    images
+    |> Stream.map(&byte_size/1)
+    |> Enum.max()
+  end
 
   defp convert_to_tensors({images, labels}) do
     images
