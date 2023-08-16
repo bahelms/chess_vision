@@ -26,6 +26,10 @@ config :chess_vision, ChessVisionWeb.Endpoint,
 # at the `config/runtime.exs`.
 config :chess_vision, ChessVision.Mailer, adapter: Swoosh.Adapters.Local
 
+config :chess_vision,
+  board_detection_output_dir: "image_output/squares",
+  training_data_images_dir: "training_data/original_images"
+
 # Configure esbuild (the version is required)
 config :esbuild,
   version: "0.17.11",

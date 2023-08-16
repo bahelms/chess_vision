@@ -93,6 +93,7 @@ fn crop_board_squares_and_save(
                         },
                     )
                     .expect("Cropping failed");
+
                     if cropped.size().unwrap().width != 0 {
                         let filename = format_filename(h_int_idx, point_idx);
                         save_image(&format!("squares/{}", filename), &cropped);
@@ -132,7 +133,8 @@ fn format_filename(row: usize, col: usize) -> String {
 }
 
 fn find_intersections(lines: Vec<PolarLine>, max_width: i32) -> Vec<Vec<Point>> {
-    let (horizontal_lines, vertical_lines) = split_lines_by_orientation(lines, max_width);
+    let (horizontal_lines, vertical_lines) =
+        partition_horizontal_and_vertical_lines(lines, max_width);
     let mut horizontal_intersections = Vec::new();
 
     for h_line in horizontal_lines {
@@ -148,7 +150,7 @@ fn find_intersections(lines: Vec<PolarLine>, max_width: i32) -> Vec<Vec<Point>> 
     horizontal_intersections
 }
 
-fn split_lines_by_orientation(
+fn partition_horizontal_and_vertical_lines(
     lines: Vec<PolarLine>,
     max_width: i32,
 ) -> (Vec<PolarLine>, Vec<PolarLine>) {
@@ -237,7 +239,7 @@ fn save_lines_image(lines: &Vec<PolarLine>, edges: &core::Mat) {
 
 fn save_image(filename: &str, image: &Mat) {
     std::fs::create_dir_all("image_output/squares")
-        .expect("Failed to creat 'image_output/squares'");
+        .expect("Failed to create 'image_output/squares'");
 
     let write_params = core::Vector::new();
     let filepath = format!("image_output/{}", filename);
