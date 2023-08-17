@@ -6,7 +6,7 @@ defmodule ChessVision.ImageRecognition.Model.Training do
 
   alias ChessVision.ImageRecognition
 
-  defmodule BoardImage do
+  defmodule Board do
     defstruct [:name, :image_path, :fen, squares: []]
 
     def new(image_path) do
@@ -23,41 +23,49 @@ defmodule ChessVision.ImageRecognition.Model.Training do
     end
   end
 
-  defmodule SquareImage do
+  defmodule Square do
     defstruct [:name, :bytes]
 
-    def new(name) do
+    def new(filename) do
       path =
         Application.get_env(:chess_vision, :board_detection_output_dir)
-        |> Path.join(name)
+        |> Path.join(filename)
 
-      %__MODULE__{name: name, bytes: File.read!(path)}
+      %__MODULE__{
+        name: Path.basename(filename, Path.extname(filename)),
+        bytes: File.read!(path)
+      }
     end
   end
 
   def prepare_training_data do
-    load_images()
-    |> Enum.map(fn board_image ->
-      squares =
-        board_image.image_path
-        |> ImageRecognition.detect_chessboard()
-        |> Enum.map(&SquareImage.new/1)
-        |> pad_trailing_image_bytes()
-
-      Map.put(board_image, :squares, squares)
-    end)
+    load_boards()
+    |> detect_board_squares()
 
     # |> convert_to_tensors()
   end
 
-  defp load_images() do
+  defp load_boards() do
     Application.get_env(:chess_vision, :training_data_images_dir)
     |> Path.join("*.png")
     |> Path.wildcard()
-    |> Enum.map(&BoardImage.new/1)
+    |> Enum.map(&Board.new/1)
+  end
+
+  defp detect_board_squares(boards) do
+    Enum.map(boards, fn board ->
+      squares =
+        board.image_path
+        |> ImageRecognition.detect_chessboard()
+        |> Enum.map(&Square.new/1)
+        |> pad_trailing_image_bytes()
+
+      Map.put(board, :squares, squares)
+    end)
   end
 
   # So all images have the same length
+  # This may be better to do inside detect_chessboard/1 but binaries are fun!
   defp pad_trailing_image_bytes(square_images) do
     max_size = find_max_byte_size(square_images)
 
