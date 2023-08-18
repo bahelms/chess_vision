@@ -6,6 +6,70 @@ defmodule ChessVision.ImageRecognition.Model.Training do
 
   alias ChessVision.ImageRecognition
 
+  defmodule FEN do
+    @file_map %{
+      0 => "a",
+      1 => "b",
+      2 => "c",
+      3 => "d",
+      4 => "e",
+      5 => "f",
+      6 => "g",
+      7 => "h"
+    }
+
+    def convert_to_map(fen) do
+      # r1b2rk1/p4pbp/2p1p1p1/q3N3/5B2/2N4P/PP3PP1/R2QK2R
+      # label_map = %{
+      #   "R" => <<1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0>>,
+      #   "N" => <<0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0>>,
+      #   "B" => <<0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0>>,
+      #   "Q" => <<0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0>>,
+      #   "K" => <<0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0>>,
+      #   "P" => <<0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0>>,
+      #   "r" => <<0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0>>,
+      #   "n" => <<0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0>>,
+      #   "b" => <<0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0>>,
+      #   "q" => <<0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0>>,
+      #   "k" => <<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0>>,
+      #   "p" => <<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0>>,
+      #   "empty" => <<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1>>
+      # }
+
+      {map, _} =
+        fen
+        |> String.split("/")
+        |> Enum.reduce({%{}, 8}, fn rank, {map, rank_num} ->
+          map = parse_rank(rank, rank_num, map)
+          {map, rank_num - 1}
+        end)
+
+      map
+    end
+
+    def parse_rank(rank, rank_num, map) do
+      {map, _} =
+        rank
+        |> String.split("", trim: true)
+        |> Enum.reduce({map, 0}, fn value, {map, i} ->
+          case Integer.parse(value) do
+            {int, _} ->
+              map =
+                Enum.reduce(0..(int - 1), map, fn num, map ->
+                  Map.put(map, "#{@file_map[i + num]}#{rank_num}", "empty")
+                end)
+
+              {map, i + int}
+
+            _ ->
+              {Map.put(map, "#{@file_map[i]}#{rank_num}", value), i + 1}
+          end
+        end)
+
+      map
+    end
+  end
+
   defmodule Board do
     defstruct [:name, :image_path, :fen, squares: []]
 
@@ -14,6 +78,7 @@ defmodule ChessVision.ImageRecognition.Model.Training do
         "#{Path.rootname(image_path)}.fen"
         |> File.read!()
         |> String.trim()
+        |> FEN.convert_to_map()
 
       %__MODULE__{
         name: Path.basename(image_path),
@@ -24,7 +89,7 @@ defmodule ChessVision.ImageRecognition.Model.Training do
   end
 
   defmodule Square do
-    defstruct [:name, :bytes]
+    defstruct [:name, :bytes, :label]
 
     def new(filename) do
       path =
@@ -57,7 +122,8 @@ defmodule ChessVision.ImageRecognition.Model.Training do
       squares =
         board.image_path
         |> ImageRecognition.detect_chessboard()
-        |> Enum.map(&Square.new/1)
+        |> Stream.map(&Square.new/1)
+        # |> Stream.map(&label_square(&1, board.fen))
         |> pad_trailing_image_bytes()
 
       Map.put(board, :squares, squares)
