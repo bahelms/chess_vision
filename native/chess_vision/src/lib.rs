@@ -14,27 +14,43 @@ fn detect_chessboard(image_file: String) -> Vec<String> {
         .expect("Image file could not be read");
     save_image("grayscale.jpg", &image);
 
-    let max_width = image.rows();
-
     // canny edge detection
     let mut edges = image.clone();
     imgproc::canny(&image, &mut edges, 150.0, 190.0, 3, false).expect("Failed to execute canny");
     save_image("edges.jpg", &edges);
 
     // hough line transform
-    let mut lines = edges.clone();
-    imgproc::hough_lines(&edges, &mut lines, 1.0, PI / 180.0, 1100, 0.0, 0.0, 0.0, PI)
-        .expect("Failed to execute hough_lines");
+    let lines = detect_lines(edges.clone(), &edges);
 
     // cleanup lines
+    let max_width = image.rows();
     let mut polar_lines = convert_to_polar_lines(&lines, max_width as f32);
     let polar_set: HashSet<PolarLine> = HashSet::from_iter(polar_lines.iter().cloned());
     polar_lines = normalize_to_origin(polar_set, max_width);
+    polar_lines = add_border_lines(polar_lines, max_width);
     polar_lines.sort_by_key(|l| (l.start.x, l.start.y));
     save_lines_image(&polar_lines, &edges);
 
+    // crop square images
     let intersections = find_intersections(polar_lines, max_width);
     crop_board_squares_and_save(intersections, image, max_width)
+}
+
+fn detect_lines(mut lines: Mat, edges: &Mat) -> Mat {
+    let threshold = 1100; // fine tuned for the digital images
+    imgproc::hough_lines(
+        &edges,
+        &mut lines,
+        1.0,
+        PI / 180.0,
+        threshold,
+        0.0,
+        0.0,
+        0.0,
+        PI,
+    )
+    .expect("Failed to execute hough_lines");
+    lines
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -66,6 +82,92 @@ impl std::fmt::Display for PolarLine {
             self.start.x, self.start.y, self.end.x, self.end.y
         )
     }
+}
+
+// converts Hough space (rho, theta) to polar space (x, y)
+fn convert_to_polar_lines(lines: &core::Mat, max_width: f32) -> Vec<PolarLine> {
+    let mut polar_lines = Vec::new();
+    for row in 0..lines.rows() {
+        for col in 0..lines.cols() {
+            let line = lines.at_2d::<core::Vec2f>(row, col).unwrap();
+            let rho = line[0];
+            let theta = line[1];
+            let a = theta.cos();
+            let b = theta.sin();
+            let x = a * rho;
+            let y = b * rho;
+            let pt1 = Point::new((x + max_width * -b) as i32, (y + max_width * a) as i32);
+            let pt2 = Point::new((x - max_width * -b) as i32, (y - max_width * a) as i32);
+            polar_lines.push(PolarLine::new(pt1, pt2));
+        }
+    }
+    polar_lines
+}
+
+fn normalize_to_origin(line_set: HashSet<PolarLine>, max_width: i32) -> Vec<PolarLine> {
+    let mut lines = Vec::from_iter(line_set.iter().cloned());
+    for line in &mut lines {
+        if line.start.x == -max_width {
+            line.start = Point::new(0, line.start.y);
+        } else if line.end.y == -max_width {
+            line.end = Point::new(line.end.x, 0);
+        }
+    }
+    lines
+}
+
+// HACK: add for manually cropped digital picture
+fn add_border_lines(mut lines: Vec<PolarLine>, max_width: i32) -> Vec<PolarLine> {
+    let top_border = PolarLine::new(Point::new(0, 0), Point::new(max_width, 0));
+    let bottom_border = PolarLine::new(Point::new(0, max_width), Point::new(max_width, max_width));
+    let left_border = PolarLine::new(Point::new(0, max_width), Point::new(0, 0));
+    let right_border = PolarLine::new(Point::new(max_width, max_width), Point::new(max_width, 0));
+
+    if !lines.contains(&top_border) {
+        lines.push(top_border);
+    }
+    if !lines.contains(&bottom_border) {
+        lines.push(bottom_border);
+    }
+    if !lines.contains(&left_border) {
+        lines.push(left_border);
+    }
+    if !lines.contains(&right_border) {
+        lines.push(right_border);
+    }
+    lines
+}
+
+fn find_intersections(lines: Vec<PolarLine>, max_width: i32) -> Vec<Vec<Point>> {
+    let (horizontal_lines, vertical_lines) = partition_horizontal_and_vertical_lines(lines);
+    let mut horizontal_intersections = Vec::new();
+
+    for h_line in horizontal_lines {
+        let mut v_intersections = Vec::new();
+        for v_line in &vertical_lines {
+            let v_x = v_line.start.x;
+            if (0..max_width + 1).contains(&v_x) {
+                v_intersections.push(Point::new(v_x, h_line.end.y));
+            }
+        }
+        horizontal_intersections.push(v_intersections);
+    }
+    horizontal_intersections
+}
+
+fn partition_horizontal_and_vertical_lines(
+    lines: Vec<PolarLine>,
+) -> (Vec<PolarLine>, Vec<PolarLine>) {
+    let mut horizontal_lines = Vec::new();
+    let mut vertical_lines = Vec::new();
+    for line in lines {
+        if line.start.x == 0 && line.end.x != 0 {
+            horizontal_lines.push(line)
+        } else {
+            vertical_lines.push(line)
+        }
+    }
+    (horizontal_lines, vertical_lines)
 }
 
 fn crop_board_squares_and_save(
@@ -109,6 +211,7 @@ fn crop_board_squares_and_save(
 }
 
 fn format_filename(row: usize, col: usize) -> String {
+    // println!("row {} - col {}", row, col);
     let row_map = HashMap::from([
         (0, "8"),
         (1, "7"),
@@ -130,90 +233,6 @@ fn format_filename(row: usize, col: usize) -> String {
         (7, "h"),
     ]);
     format!("{}{}.jpg", col_map[&col], row_map[&row])
-}
-
-fn find_intersections(lines: Vec<PolarLine>, max_width: i32) -> Vec<Vec<Point>> {
-    let (horizontal_lines, vertical_lines) =
-        partition_horizontal_and_vertical_lines(lines, max_width);
-    let mut horizontal_intersections = Vec::new();
-
-    for h_line in horizontal_lines {
-        let mut v_intersections = Vec::new();
-        for v_line in &vertical_lines {
-            let v_x = v_line.start.x;
-            if (0..max_width + 1).contains(&v_x) {
-                v_intersections.push(Point::new(v_x, h_line.end.y));
-            }
-        }
-        horizontal_intersections.push(v_intersections);
-    }
-    horizontal_intersections
-}
-
-fn partition_horizontal_and_vertical_lines(
-    lines: Vec<PolarLine>,
-    max_width: i32,
-) -> (Vec<PolarLine>, Vec<PolarLine>) {
-    let mut horizontal_lines = Vec::new();
-    let mut vertical_lines = Vec::new();
-    for line in lines {
-        if line.start.x == 0 {
-            horizontal_lines.push(line)
-        } else {
-            vertical_lines.push(line)
-        }
-    }
-
-    // HACK: add for manually cropped digital picture
-    horizontal_lines.insert(
-        0,
-        PolarLine::new(Point::new(0, 0), Point::new(max_width, 0)),
-    ); // top horizontal board edge
-    horizontal_lines.push(PolarLine::new(
-        Point::new(0, max_width),
-        Point::new(max_width, max_width),
-    )); // bottom horizontal board edge
-    vertical_lines.insert(
-        0,
-        PolarLine::new(Point::new(0, max_width), Point::new(0, 0)),
-    ); // reversed left vertical board edge
-    vertical_lines.push(PolarLine::new(
-        Point::new(max_width, max_width),
-        Point::new(max_width, 0),
-    )); // reversed right vertical board edge
-    (horizontal_lines, vertical_lines)
-}
-
-fn normalize_to_origin(line_set: HashSet<PolarLine>, max_width: i32) -> Vec<PolarLine> {
-    let mut lines = Vec::from_iter(line_set.iter().cloned());
-    for line in &mut lines {
-        if line.start.x == -max_width {
-            line.start = Point::new(0, line.start.y);
-        } else if line.end.y == -max_width {
-            line.end = Point::new(line.end.x, 0);
-        }
-    }
-    lines
-}
-
-// converts Hough space (rho, theta) to polar space (x, y)
-fn convert_to_polar_lines(lines: &core::Mat, max_width: f32) -> Vec<PolarLine> {
-    let mut polar_lines = Vec::new();
-    for row in 0..lines.rows() {
-        for col in 0..lines.cols() {
-            let line = lines.at_2d::<core::Vec2f>(row, col).unwrap();
-            let rho = line[0];
-            let theta = line[1];
-            let a = theta.cos();
-            let b = theta.sin();
-            let x = a * rho;
-            let y = b * rho;
-            let pt1 = Point::new((x + max_width * -b) as i32, (y + max_width * a) as i32);
-            let pt2 = Point::new((x - max_width * -b) as i32, (y - max_width * a) as i32);
-            polar_lines.push(PolarLine::new(pt1, pt2));
-        }
-    }
-    polar_lines
 }
 
 fn save_lines_image(lines: &Vec<PolarLine>, edges: &core::Mat) {

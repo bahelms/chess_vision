@@ -8,11 +8,11 @@ defmodule ChessVision.ImageRecognition.Model do
     |> Axon.dense(@label_elements_count, activation: :softmax)
   end
 
-  def train(model, training_data) do
+  def train(model, training_data, validation_data) do
     model
     |> Axon.Loop.trainer(:categorical_cross_entropy, Axon.Optimizers.adam(0.01))
     |> Axon.Loop.metric(:accuracy, "Accuracy")
-    # |> Axon.Loop.validate(model, validation_data)
+    |> Axon.Loop.validate(model, validation_data)
     |> Axon.Loop.run(training_data, %{}, compiler: EXLA, epochs: 10)
   end
 
@@ -21,6 +21,12 @@ defmodule ChessVision.ImageRecognition.Model do
     |> Axon.Loop.evaluator()
     |> Axon.Loop.metric(:accuracy, "Accuracy")
     |> Axon.Loop.run(test_data, state)
+  end
+
+  def predict(model, state, tensor) do
+    Axon.predict(model, state, tensor)
+    |> Nx.argmax()
+    |> Nx.to_number()
   end
 
   def save!(model, state), do: File.write!(path(), Axon.serialize(model, state))
