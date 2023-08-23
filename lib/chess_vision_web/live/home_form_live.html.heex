@@ -3,9 +3,23 @@
 
   <.simple_form for={%{}} phx-submit="capture" phx-change="validate">
     <.live_file_input upload={@uploads.board_image} />
-    <.live_img_preview :for={entry <- @uploads.board_image.entries} entry={entry} />
+    <.live_img_preview
+      :for={entry <- @uploads.board_image.entries}
+      entry={entry}
+      class="max-w-xl"
+    />
     <:actions>
       <.button>Capture chessboard</.button>
     </:actions>
   </.simple_form>
+
+  <div class="mt-10 flex justify-evenly">
+    <img src={@uploaded_image} class="max-w-xl" />
+    <img src={@uploaded_image} class="max-w-xl" />
+  </div>
+  <%= if @fen do %>
+    <div class="mt-10">
+      FEN: <%= @fen %>
+    </div>
+  <% end %>
 </div>

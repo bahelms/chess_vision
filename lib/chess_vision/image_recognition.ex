@@ -25,13 +25,10 @@ defmodule ChessVision.ImageRecognition do
     |> Stream.map(fn {square, square_tensor} ->
       label = Model.predict(model, model_state, square_tensor)
 
-      IO.inspect(label, label: "label")
-
       square
       |> Map.put(:predicted_label, label)
       |> Map.put(:fen_value, Training.label_to_fen_value(label))
     end)
     |> FEN.encode_squares_to_fen()
-    |> IO.inspect(label: "FEN")
   end
 end
