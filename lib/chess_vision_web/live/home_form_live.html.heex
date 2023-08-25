@@ -1,5 +1,5 @@
 <div class="text-center">
-  <h1 class="text-4xl my-20">Chess Vision</h1>
+  <h1 class="text-4xl">Chess Vision</h1>
 
   <.simple_form for={%{}} phx-submit="capture" phx-change="validate">
     <.live_file_input upload={@uploads.board_image} />
@@ -13,12 +13,15 @@
     </:actions>
   </.simple_form>
 
-  <div class="mt-10 flex justify-evenly">
-    <img src={@uploaded_image} class="max-w-xl" />
-    <img src={@uploaded_image} class="max-w-xl" />
-  </div>
   <%= if @fen do %>
     <div class="mt-10">
+      <img src={@uploaded_image} class="max-w-xl border-2 border-black" />
+      <div class="max-w-xl mt-10">
+        <chess-board position={@fen}></chess-board>
+      </div>
+    </div>
+
+    <div>
       FEN: <%= @fen %>
     </div>
   <% end %>
