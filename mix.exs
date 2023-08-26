@@ -47,7 +47,12 @@ defmodule ChessVision.MixProject do
       {:gettext, "~> 0.20"},
       {:jason, "~> 1.2"},
       {:plug_cowboy, "~> 2.5"},
-      {:rustler, "~> 0.29.1"}
+      {:rustler, "~> 0.29.1"},
+      {:nx, "~> 0.5.3"},
+      {:axon, "~> 0.5.1"},
+      {:exla, "~> 0.5.3"},
+      {:scidata, "~> 0.1.5"},
+      {:pixels, "~> 0.3.0"}
     ]
   end
 

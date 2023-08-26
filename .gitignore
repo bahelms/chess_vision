@@ -39,3 +39,4 @@ npm-debug.log
 input_images/
 image_output/
 priv/native/libchess_vision.so
+training_data
