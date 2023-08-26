@@ -51,7 +51,8 @@ defmodule ChessVision.MixProject do
       {:nx, "~> 0.5.3"},
       {:axon, "~> 0.5.1"},
       {:exla, "~> 0.5.3"},
-      {:scidata, "~> 0.1.5"}
+      {:scidata, "~> 0.1.5"},
+      {:pixels, "~> 0.3.0"}
     ]
   end
 

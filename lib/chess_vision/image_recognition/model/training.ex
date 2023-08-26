@@ -54,7 +54,7 @@ defmodule ChessVision.ImageRecognition.Model.Training do
   end
 
   # So all images have the same length
-  # This may be better to do inside detect_chessboard/1 but binaries are fun!
+  # This may be better to do with OpenCV inside detect_chessboard/1 but binaries are fun!
   def pad_trailing_image_bytes(square_images) do
     max_size = find_max_byte_size(square_images)
 
