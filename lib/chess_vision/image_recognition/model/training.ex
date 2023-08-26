@@ -5,7 +5,7 @@ defmodule ChessVision.ImageRecognition.Model.Training do
   """
 
   alias ChessVision.ImageRecognition
-  alias ChessVision.ImageRecognition.FEN
+  alias ChessVision.ImageRecognition.{Square, Board}
 
   @label_map %{
     "R" => <<1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0>>,
@@ -22,44 +22,6 @@ defmodule ChessVision.ImageRecognition.Model.Training do
     "p" => <<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0>>,
     "1" => <<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1>>
   }
-
-  defmodule Board do
-    defstruct [:name, :image_path, :fen, squares: []]
-
-    def new(image_path) do
-      fen =
-        "#{Path.rootname(image_path)}.fen"
-        |> File.read!()
-        |> String.trim()
-        |> FEN.convert_to_map()
-
-      %__MODULE__{
-        name: Path.basename(image_path),
-        image_path: image_path,
-        fen: fen
-      }
-    end
-  end
-
-  defmodule Square do
-    defstruct [:name, :rank, :file, :bytes, :training_label, :predicted_label, :fen_value]
-
-    def new(filename) do
-      path =
-        Application.get_env(:chess_vision, :board_detection_output_dir)
-        |> Path.join(filename)
-
-      name = Path.basename(filename, Path.extname(filename))
-      [file, rank] = String.split(name, "", trim: true)
-
-      %__MODULE__{
-        name: name,
-        rank: rank,
-        file: file,
-        bytes: File.read!(path)
-      }
-    end
-  end
 
   def prepare_training_data do
     load_boards()
@@ -118,7 +80,7 @@ defmodule ChessVision.ImageRecognition.Model.Training do
           {all_bytes <> bytes, all_labels <> label}
         end)
 
-      squares_tensor = Nx.from_binary(bytes, :u8) |> Nx.reshape({64, :auto})
+      squares_tensor = Nx.from_binary(bytes, :u8) |> Nx.reshape({64, :auto}) |> Nx.divide(255)
       labels_tensor = Nx.from_binary(labels, :u8) |> Nx.reshape({64, :auto})
       {squares_tensor, labels_tensor}
     end)

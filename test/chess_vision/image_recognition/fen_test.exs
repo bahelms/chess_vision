@@ -1,7 +1,7 @@
 defmodule ChessVision.ImageRecognition.FENTest do
   use ExUnit.Case, async: true
   alias ChessVision.ImageRecognition.FEN
-  alias ChessVision.ImageRecognition.Model.Training.Square
+  alias ChessVision.ImageRecognition.Square
 
   test "convert_to_map/1" do
     map = FEN.convert_to_map("r1b2rk1/p4pbp/2p1p1p1/q3N3/5B2/2N4P/PP3PP1/R2QK2R")
