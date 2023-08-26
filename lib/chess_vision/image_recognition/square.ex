@@ -1,5 +1,15 @@
 defmodule ChessVision.ImageRecognition.Square do
-  defstruct [:name, :rank, :file, :bytes, :training_label, :predicted_label, :fen_value]
+  defstruct [
+    :name,
+    :rank,
+    :file,
+    :width,
+    :height,
+    :pixels,
+    :training_label,
+    :predicted_label,
+    :fen_value
+  ]
 
   def new(filename) do
     path =
@@ -8,12 +18,15 @@ defmodule ChessVision.ImageRecognition.Square do
 
     name = Path.basename(filename, Path.extname(filename))
     [file, rank] = String.split(name, "", trim: true)
+    {:ok, image} = Pixels.read_file(path)
 
     %__MODULE__{
       name: name,
       rank: rank,
       file: file,
-      bytes: File.read!(path)
+      width: image.width,
+      height: image.height,
+      pixels: image.data
     }
   end
 end

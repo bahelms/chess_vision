@@ -26,7 +26,8 @@ defmodule ChessVision.ImageRecognition.Model.Training do
   def prepare_training_data do
     load_boards()
     |> detect_board_squares()
-    |> convert_to_tensors()
+
+    # |> convert_to_tensors()
   end
 
   defp load_boards() do
@@ -37,15 +38,13 @@ defmodule ChessVision.ImageRecognition.Model.Training do
   end
 
   defp detect_board_squares(boards) do
-    Enum.map(boards, fn board ->
-      squares =
-        board.image_path
-        |> ImageRecognition.detect_chessboard()
-        |> Stream.map(&Square.new/1)
-        |> Stream.map(&label_square(&1, board.fen))
-        |> pad_trailing_image_bytes()
+    Stream.flat_map(boards, fn board ->
+      board.image_path
+      |> ImageRecognition.detect_chessboard()
+      |> Stream.map(&Square.new/1)
+      |> Stream.map(&label_square(&1, board.fen))
 
-      Map.put(board, :squares, squares)
+      # |> pad_trailing_image_bytes()
     end)
   end
 
