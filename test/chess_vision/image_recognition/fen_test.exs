@@ -42,25 +42,25 @@ defmodule ChessVision.ImageRecognition.FENTest do
   test "encode_squares_to_fen/1" do
     fen =
       [
-        %Square{file: "a", rank: "8", fen_value: "r"},
+        %Square{file: "a", rank: "8", fen_value: "1"},
         %Square{file: "b", rank: "8", fen_value: "1"},
         %Square{file: "c", rank: "8", fen_value: "b"},
-        %Square{file: "d", rank: "8", fen_value: "1"},
+        %Square{file: "d", rank: "8", fen_value: "p"},
         %Square{file: "e", rank: "8", fen_value: "1"},
         %Square{file: "f", rank: "8", fen_value: "r"},
         %Square{file: "g", rank: "8", fen_value: "k"},
         %Square{file: "h", rank: "8", fen_value: "1"},
-        %Square{file: "a", rank: "7", fen_value: "p"},
+        %Square{file: "a", rank: "7", fen_value: "N"},
         %Square{file: "b", rank: "7", fen_value: "1"},
         %Square{file: "c", rank: "7", fen_value: "1"},
         %Square{file: "d", rank: "7", fen_value: "1"},
         %Square{file: "e", rank: "7", fen_value: "1"},
         %Square{file: "f", rank: "7", fen_value: "p"},
         %Square{file: "g", rank: "7", fen_value: "b"},
-        %Square{file: "h", rank: "7", fen_value: "p"}
+        %Square{file: "h", rank: "7", fen_value: "1"}
       ]
       |> FEN.encode_squares_to_fen()
 
-    assert fen == "r1b2rk1/p4pbp"
+    assert fen == "2bp1rk1/N4pb1"
   end
 end

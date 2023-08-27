@@ -29,4 +29,12 @@ defmodule ChessVision.ImageRecognition.Square do
       pixels: image.data
     }
   end
+
+  # Pixels returns RGBA data, so 4 channels
+  def convert_to_tensor(square) do
+    square.pixels
+    |> Nx.from_binary(:u8)
+    |> Nx.reshape({4, square.height, square.width})
+    |> Nx.divide(255)
+  end
 end

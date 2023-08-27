@@ -50,17 +50,9 @@ defmodule ChessVision.ImageRecognition.Model.Training do
     Map.put(square, :training_label, @label_map[fen[square.name]])
   end
 
-  # Pixels returns RGBA data, so 4 channels
   defp convert_to_labelled_tensors(squares) do
     Stream.map(squares, fn square ->
-      tensor =
-        square.pixels
-        |> Nx.from_binary(:u8)
-        |> Nx.reshape({4, square.height, square.width})
-        |> Nx.divide(255)
-
-      label = Nx.from_binary(square.training_label, :u8)
-      {tensor, label}
+      {Square.convert_to_tensor(square), Nx.from_binary(square.training_label, :u8)}
     end)
   end
 
