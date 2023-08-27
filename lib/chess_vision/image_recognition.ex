@@ -29,10 +29,10 @@ defmodule ChessVision.ImageRecognition do
   end
 
   defp predict_and_parse_label({square, tensor}, model, state) do
-    label = Model.predict(model, state, tensor)
+    label_idx = Model.predict(model, state, tensor)
 
     square
-    |> Map.put(:predicted_label, label)
-    |> Map.put(:fen_value, Training.label_to_fen_value(label))
+    |> Map.put(:predicted_label_idx, label_idx)
+    |> Map.put(:fen_value, Training.label_to_fen_value(label_idx))
   end
 end

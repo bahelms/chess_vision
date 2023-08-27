@@ -7,6 +7,7 @@ defmodule ChessVision.ImageRecognition.Model.Training do
   alias ChessVision.ImageRecognition
   alias ChessVision.ImageRecognition.{Square, Board}
 
+  @label_list ["R", "N", "B", "Q", "K", "P", "r", "n", "b", "q", "k", "p", "1"]
   @label_map %{
     "R" => <<1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0>>,
     "N" => <<0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0>>,
@@ -56,11 +57,6 @@ defmodule ChessVision.ImageRecognition.Model.Training do
     end)
   end
 
-  def label_to_fen_value(label_index) do
-    Map.keys(@label_map)
-    |> Enum.at(label_index)
-  end
-
   defp batch(squares_with_labels) do
     squares_with_labels
     |> Stream.chunk_every(32)
@@ -68,5 +64,9 @@ defmodule ChessVision.ImageRecognition.Model.Training do
       {squares, labels} = Enum.unzip(squares_with_labels)
       {Nx.stack(squares), Nx.stack(labels)}
     end)
+  end
+
+  def label_to_fen_value(label_index) do
+    Enum.at(@label_list, label_index)
   end
 end

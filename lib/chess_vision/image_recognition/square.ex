@@ -7,7 +7,7 @@ defmodule ChessVision.ImageRecognition.Square do
     :height,
     :pixels,
     :training_label,
-    :predicted_label,
+    :predicted_label_idx,
     :fen_value
   ]
 
