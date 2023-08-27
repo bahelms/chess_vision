@@ -26,8 +26,8 @@ defmodule ChessVision.ImageRecognition.Model.Training do
   def prepare_training_data do
     load_boards()
     |> detect_board_squares()
-
-    # |> convert_to_tensors()
+    |> convert_to_labelled_tensors()
+    |> batch()
   end
 
   defp load_boards() do
@@ -43,8 +43,6 @@ defmodule ChessVision.ImageRecognition.Model.Training do
       |> ImageRecognition.detect_chessboard()
       |> Stream.map(&Square.new/1)
       |> Stream.map(&label_square(&1, board.fen))
-
-      # |> pad_trailing_image_bytes()
     end)
   end
 
@@ -52,41 +50,31 @@ defmodule ChessVision.ImageRecognition.Model.Training do
     Map.put(square, :training_label, @label_map[fen[square.name]])
   end
 
-  # So all images have the same length
-  # This may be better to do with OpenCV inside detect_chessboard/1 but binaries are fun!
-  def pad_trailing_image_bytes(square_images) do
-    max_size = find_max_byte_size(square_images)
+  # Pixels returns RGBA data, so 4 channels
+  defp convert_to_labelled_tensors(squares) do
+    Stream.map(squares, fn square ->
+      tensor =
+        square.pixels
+        |> Nx.from_binary(:u8)
+        |> Nx.reshape({4, square.height, square.width})
+        |> Nx.divide(255)
 
-    Enum.map(square_images, fn image ->
-      diff = max_size - byte_size(image.bytes)
-      Map.put(image, :bytes, <<image.bytes::binary, 0::size(diff)-unit(8)>>)
-    end)
-  end
-
-  defp find_max_byte_size(images) do
-    images
-    |> Stream.map(&byte_size(&1.bytes))
-    |> Enum.max()
-  end
-
-  defp convert_to_tensors(boards) do
-    Enum.map(boards, fn board ->
-      {bytes, labels} =
-        Enum.map(board.squares, fn square ->
-          {square.bytes, square.training_label}
-        end)
-        |> Enum.reduce({<<>>, <<>>}, fn {bytes, label}, {all_bytes, all_labels} ->
-          {all_bytes <> bytes, all_labels <> label}
-        end)
-
-      squares_tensor = Nx.from_binary(bytes, :u8) |> Nx.reshape({64, :auto}) |> Nx.divide(255)
-      labels_tensor = Nx.from_binary(labels, :u8) |> Nx.reshape({64, :auto})
-      {squares_tensor, labels_tensor}
+      label = Nx.from_binary(square.training_label, :u8)
+      {tensor, label}
     end)
   end
 
   def label_to_fen_value(label_index) do
     Map.keys(@label_map)
     |> Enum.at(label_index)
+  end
+
+  defp batch(squares_with_labels) do
+    squares_with_labels
+    |> Stream.chunk_every(32)
+    |> Stream.map(fn squares_with_labels ->
+      {squares, labels} = Enum.unzip(squares_with_labels)
+      {Nx.stack(squares), Nx.stack(labels)}
+    end)
   end
 end

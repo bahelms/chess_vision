@@ -1,5 +1,4 @@
 defmodule ChessVisionWeb.HomeFormLive do
-  alias ElixirLS.LanguageServer.Providers.ExecuteCommand.ApplySpec
   use ChessVisionWeb, :live_view
 
   @impl true

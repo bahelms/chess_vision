@@ -1,6 +1,6 @@
 defmodule ChessVision.ImageRecognition do
   use Rustler, otp_app: :chess_vision, crate: "chess_vision"
-  alias ChessVision.ImageRecognition.{Model, Model.Training, FEN}
+  alias ChessVision.ImageRecognition.{Model, Model.Training, FEN, Square}
 
   def convert_image_to_fen(image_file) do
     image_file
@@ -14,8 +14,7 @@ defmodule ChessVision.ImageRecognition do
     {model, model_state} = Model.load!()
 
     filenames
-    |> Enum.map(&Training.Square.new/1)
-    |> Training.pad_trailing_image_bytes()
+    |> Enum.map(&Square.new/1)
     |> Stream.map(fn square ->
       {square,
        square.bytes
