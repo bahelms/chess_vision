@@ -11,6 +11,7 @@ defmodule Mix.Tasks.Train do
   @impl Mix.Task
   @shortdoc "Train an Axon model to classify chess pieces."
   def run(_) do
+    Mix.Shell.IO.info("preparing data...")
     data = Training.prepare_training_data()
     training_count = floor(0.8 * Enum.count(data))
     validation_count = floor(0.2 * training_count)

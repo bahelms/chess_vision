@@ -4,8 +4,6 @@ defmodule ChessVision.ImageRecognition.Model do
   def new(shape) do
     Axon.input("input_0", shape: shape)
     |> Axon.flatten()
-    # |> Axon.dense(128, activation: :relu)
-    |> Axon.relu()
     |> Axon.dense(@label_elements_count, activation: :softmax)
   end
 
@@ -14,7 +12,7 @@ defmodule ChessVision.ImageRecognition.Model do
     |> Axon.Loop.trainer(:categorical_cross_entropy, Axon.Optimizers.adam(0.01), log: 1)
     |> Axon.Loop.metric(:accuracy, "Accuracy")
     |> Axon.Loop.validate(model, validation_data)
-    |> Axon.Loop.run(training_data, %{}, compiler: EXLA, epochs: 10)
+    |> Axon.Loop.run(training_data, %{}, compiler: EXLA, epochs: 14)
   end
 
   def test(model, state, test_data) do

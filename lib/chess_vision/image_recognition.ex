@@ -20,7 +20,7 @@ defmodule ChessVision.ImageRecognition do
     |> FEN.encode_squares_to_fen()
   end
 
-  # stack to create a shape of [1][4][226][226]
+  # Use Nx.stack to create a shape of [1][4][226][226]
   defp convert_to_tensor(square) do
     {square,
      square
