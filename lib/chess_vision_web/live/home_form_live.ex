@@ -1,5 +1,4 @@
 defmodule ChessVisionWeb.HomeFormLive do
-  alias ElixirLS.LanguageServer.Providers.ExecuteCommand.ApplySpec
   use ChessVisionWeb, :live_view
 
   @impl true
@@ -12,7 +11,7 @@ defmodule ChessVisionWeb.HomeFormLive do
 
   @impl true
   def handle_event("validate", _params, socket) do
-    {:noreply, socket}
+    {:noreply, assign(socket, :fen, nil)}
   end
 
   @impl Phoenix.LiveView

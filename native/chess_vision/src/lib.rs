@@ -37,7 +37,7 @@ fn detect_chessboard(image_file: String) -> Vec<String> {
 }
 
 fn detect_lines(mut lines: Mat, edges: &Mat) -> Mat {
-    let threshold = 1100; // fine tuned for the digital images
+    let threshold = 1150; // fine tuned for the digital images
     imgproc::hough_lines(
         &edges,
         &mut lines,

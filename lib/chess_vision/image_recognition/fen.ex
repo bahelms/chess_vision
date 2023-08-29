@@ -10,10 +10,12 @@ defmodule ChessVision.ImageRecognition.FEN do
     7 => "h"
   }
 
-  def convert_to_map(fen) do
+  def convert_to_map(fen, opts \\ []) do
+    delimiter = Keyword.get(opts, :delimiter, "/")
+
     {map, _} =
       fen
-      |> String.split("/")
+      |> String.split(delimiter)
       |> Enum.reduce({%{}, 8}, fn rank, {map, rank_num} ->
         {parse_rank(rank, rank_num, map), rank_num - 1}
       end)
@@ -72,7 +74,10 @@ defmodule ChessVision.ImageRecognition.FEN do
           end
       end
     end)
-    |> elem(0)
+    |> prepend_remaining_sum()
     |> Enum.join()
   end
+
+  defp prepend_remaining_sum({values, 0}), do: values
+  defp prepend_remaining_sum({values, sum}), do: [Integer.to_string(sum) | values]
 end
