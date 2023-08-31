@@ -62,6 +62,11 @@ config :phoenix, :json_library, Jason
 
 config :nx, :default_backend, EXLA.Backend
 
+config :chess_vision, ChessVision.ImageRecognition,
+  crate: :chess_vision,
+  skip_compilation?: true,
+  load_from: {:chess_vision, "priv/native/libchess_vision"}
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"
